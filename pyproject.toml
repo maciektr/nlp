@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "nlp"
+version = "0.1.0"
+description = ""
+authors = ["Maciej Trątnowiecki <mtratnowiecki@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+matplotlib = "^3.6.0"
+pandas = "^1.5.0"
+isort = "^5.10.1"
+
+[tool.poetry.dev-dependencies]
+black = "^22.10.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
