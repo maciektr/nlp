@@ -194,6 +194,7 @@ class CorpusProcessor:
             return {"by_year": list(self.stats.values()), "all": self.all}
 
         def plot(self):
+            plt.figure(figsize=(15,10))
             def plot_changes_by_type():
                 df = pd.DataFrame(self.get_all()["by_year"])
                 df = df.drop(
@@ -234,7 +235,7 @@ class CorpusProcessor:
             stats = pool.map(process_file, self.corpus.list_all())
             for bill_stats in stats:
                 self.corpus_stats.add(bill_stats)
-            print(self.corpus_stats.get_all())
+            pprint(self.corpus_stats.get_all())
             self.corpus_stats.plot()
 
 
