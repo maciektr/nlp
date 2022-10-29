@@ -1,0 +1,47 @@
+Number of acts containing the word "ustawa":  1178 ;  100.0 %
+Number of acts containing the phrase "kodeks postepowania cywilnego":  99 ;  8.4 %
+Number of acts containing the phrase "wchodzi w życie":  1174 ;  99.66 %
+---------------
+Ten most relevant documents for the word "konstytucja"
+Document id:  saDxHoQBsm2Uyc0TRt_d
+Score:  6.867635
+Excerpts:  ['kwietnia 1992 r. o trybie przygotowania i \nuchwalenia <em>Konstytucji</em>', 'Zgromadzeniu Narodowemu projektu nowej <em>Konstytucji</em>', 'Do zgłoszenia projektu <em>Konstytucji</em> załącza się wykaz']
+---------------
+Document id:  sKDxHoQBsm2Uyc0TXOCC
+Score:  6.662749
+Excerpts:  ['przesłanek określonych w art. 89 ust. 1 lub art. 90 <em>Konstytucji</em>', 'zgody, o której mowa w art. 89\n  ust. 1 i art. 90 <em>Konstytucji</em>', 'Rzeczypospolitej Polskiej zgodnie z art. 89 ust. 2 <em>Konstytucji</em>']
+---------------
+Document id:  r6DxHoQBsm2Uyc0TRt_d
+Score:  6.6320543
+Excerpts:  ['W razie powstania wątpliwości co do zgodności z <em>Konstytucją</em>', 'zbadanie\n   zgodności celów partii politycznej z <em>Konstytucją</em>', 'Z wnioskiem o stwierdzenie zgodności z <em>Konstytucją</em>']
+---------------
+Document id:  DqDxHoQBsm2Uyc0TRt_c
+Score:  6.626803
+Excerpts:  ['Za naruszenie <em>Konstytucji</em> lub ustawy, w związku z zajmowanym', 'W zakresie określonym w art. 107 <em>Konstytucji</em> odpowiedzialność', 'przed\n              Trybunałem Stanu za naruszenie <em>Konstytucji</em>']
+---------------
+Document id:  s6DxHoQBsm2Uyc0TRt_d
+Score:  6.251624
+Excerpts:  ['zgodności ustaw i umów międzynarodowych z\n               <em>Konstytucją</em>', 'przez\n               centralne organy państwowe, z <em>Konstytucją</em>', 'ustawami,\n             4) stwierdzenie zgodności z <em>Konstytucją</em>']
+---------------
+Document id:  S6DxHoQBsm2Uyc0TXOGC
+Score:  6.0579295
+Excerpts:  ['zwanym dalej "Dziennikiem\n  Ustaw", ogłasza się:\n   1) <em>Konstytucję</em>', 'pokoju,\n   2) referendum zatwierdzającego zmianę <em>Konstytucji</em>', 'ważności referendum zatwierdzającego zmianę\n     <em>Konstytucji</em>']
+---------------
+Document id:  AaDxHoQBsm2Uyc0TRt_c
+Score:  5.928016
+Excerpts:  ['kwietnia \n1992 r. o trybie przygotowania i uchwalenia <em>Konstytucji</em>', 'kwietnia 1992 r. o trybie przygotowania i uchwalenia <em>Konstytucji</em>', 'Prezydent Rzeczypospolitej Polskiej zarządza poddanie <em>Konstytucji</em>']
+---------------
+Document id:  U6DxHoQBsm2Uyc0TRuDd
+Score:  5.8496947
+Excerpts:  ['przez obywateli, o której mowa w art. 118 ust. 2 <em>Konstytucji</em>', 'Projekt ustawy nie może dotyczyć spraw, dla których <em>Konstytucja</em>', 'Marszałka Sejmu powinien odpowiadać wymogom\n  zawartym w <em>Konstytucji</em>']
+---------------
+Document id:  waDxHoQBsm2Uyc0TRt_d
+Score:  5.466536
+Excerpts:  ['Rzecznikiem, stoi na straży praw dziecka\n  określonych w <em>Konstytucji</em>', 'obowiązków\n     Rzecznika Praw Dziecka dochowam wierności <em>Konstytucji</em>']
+---------------
+Document id:  9KDxHoQBsm2Uyc0TXOCC
+Score:  5.466536
+Excerpts:  ['zwana dalej "Radą", realizuje cele określone w\n  <em>Konstytucji</em>', 'Trybunału Konstytucyjnego o\n     zbadanie zgodności z <em>Konstytucją</em>']
+---------------
+Number of occurrences of the word "ustawa":  24934
+Number of occurrences of the word "ustaw" in any inflectional form:  25847
