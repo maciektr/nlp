@@ -1,4 +1,5 @@
 import os
+import pickle
 import random
 import re
 from collections import Counter, defaultdict
@@ -124,18 +125,28 @@ class CorpusProcessor:
         if self.words_freq is not None:
             return self.words_freq
 
+        pickle_filename = ".word_freq.cache.pkl"
+        if os.path.isfile(pickle_filename):
+            print("Loading word frequency from cache")
+            with open(pickle_filename, "rb") as f:
+                self.words_freq = pickle.load(f)
+                return self.words_freq
+
         with Pool(N_PROCESSES) as pool:
             docs_freq = pool.map(
                 self.text_processor.get_word_frequency, self.corpus.list_paths()
             )
 
             self.words_freq = sum(docs_freq, start=Counter())
+            with open(pickle_filename, "wb") as f:
+                pickle.dump(self.words_freq, f)
+
             return self.words_freq
 
     def words_to_correct(self):
         word_freq = self.word_frequency()
         ranks = self.__class__.calculate_term_rank(word_freq)
-        # self.plot_term_ranks(ranks)
+        self.plot_term_ranks(ranks)
 
         not_in_dict = self.words_not_in_dictionary(word_freq)
         print(f"Words not in dictionary: {len(not_in_dict)}")
