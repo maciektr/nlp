@@ -11,7 +11,9 @@ from multiprocessing import Pool
 from pprint import pprint
 from typing import Dict, List, Optional, Set
 
-import morfeusz2
+import nltk
+from nltk.collocations import *
+# import morfeusz2
 import pandas as pd
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
@@ -75,7 +77,7 @@ class CorpusProcessor:
         self.corpus = corpus
         self.text_processor = text_processor
         if not text_processor:
-            self.text_processor = TextProcessor()
+            self.te xt_processor = TextProcessor()
 
         self.tokens = None
 
@@ -104,42 +106,46 @@ class CorpusProcessor:
             return self.tokens
 
     @classmethod
-    def filter_tokens(cls, key):
-        def filter_word(word):
-            word_split = str(word).split(":")
-            if len(word_split) > 1:
-                word = word_split[-2]
-            return cls.polish_is_alpha(word) and len(word) > 1
+    def filter_tokens(cls, word):
+        word_split = str(word).split(":")
+        if len(word_split) > 1:
+            word = word_split[-2]
+        return cls.polish_is_alpha(word) and len(word) > 1
 
-        return filter_word(key[0]) and filter_word(key[1])
-
-    def get_bigram(self):
+    def get_bigram(self, min_occurrences=0):
         tokens = self.get_tokens()
-        bigram = Counter(list(zip(tokens, tokens[1:])))
-        bigram = {k: v for k, v in bigram.items() if self.__class__.filter_tokens(k)}
-        return bigram
+        finder = BigramCollocationFinder.from_words(tokens)
+        finder.apply_freq_filter(min_occurrences)
+        f = self.__class__.filter_tokens
+        bigram_measures = nltk.collocations.BigramAssocMeasures()
+        scored = finder.score_ngrams(bigram_measures.pmi)
+        scored = [(t,s) for (t,s) in scored if f(t[0]) and f(t[1])]
+        return scored
+
+
+    def get_trigram(self, min_occurrences=0):
+        tokens = self.get_tokens()
+        finder = TrigramCollocationFinder.from_words(tokens)
+        finder.apply_freq_filter(min_occurrences)
+        f = self.__class__.filter_tokens
+        bigram_measures = nltk.collocations.BigramAssocMeasures()
+        scored = finder.score_ngrams(bigram_measures.pmi)
+        scored = [(t,s) for (t,s) in scored if f(t[0]) and f(t[1]) and f(t[2])]
+        return scored
+
 
     def get_word_freq(self):
         tokens = self.get_tokens()
         word_freq = Counter(tokens)
         return word_freq
 
-    def get_pmi(self, min_occurrences=0):
-        bigram = self.get_bigram()
-        word_freq = self.get_word_freq()
-        pmi = {}
-
-        for (w1, w2), freq in bigram.items():
-            if freq < min_occurrences:
-                continue
-
-            pmi[(w1, w2)] = math.log2(freq / (word_freq[w1] * word_freq[w2]))
-
-        return pmi
-
-    def get_pmi_top10(self, n=10, min_occurrences=0):
-        pmi = self.get_pmi(min_occurrences)
-        pmi_top10 = sorted(pmi.items(), key=lambda x: x[1], reverse=True)[:n]
+    def get_pmi_top10(self, n=10, min_occurrences=0, trigrams=False):
+        pmi = None
+        if trigrams:
+            pmi = self.get_trigram(min_occurrences=min_occurrences)
+        else:
+            pmi = self.get_bigram(min_occurrences=min_occurrences)
+        pmi_top10 = sorted(pmi, key=lambda x: x[1], reverse=True)[:n]
         return pmi_top10
 
 
@@ -148,21 +154,40 @@ if __name__ == "__main__":
     processor = CorpusProcessor(corpus=Corpus("../datasets/ustawy"))
     tokens = processor.get_tokens()
     print(len(tokens))
-    # print(processor.get_bigram())
     print("Top 10 PMI: \n", processor.get_pmi_top10())
     print(
         "Top 10 PMI, occurrences >= 5: \n", processor.get_pmi_top10(min_occurrences=5)
     )
 
-    print("\nClarin:")
-    processor = CorpusProcessor(
-        text_processor=ClarinTextProcessor(),
-        corpus=Corpus("../datasets/ustawy_tagged_clarin"),
-    )
+    # print("\nClarin:")
+    # processor = CorpusProcessor(
+    #     text_processor=ClarinTextProcessor(),
+    #     corpus=Corpus("../datasets/ustawy_tagged_clarin"),
+    # )
+    # tokens = processor.get_tokens()
+    # print(len(tokens))
+    # print("Top 10 PMI: \n", processor.get_pmi_top10())
+    # print(
+    #     "Top 10 PMI, occurrences >= 5: \n", processor.get_pmi_top10(min_occurrences=5)
+    # )
+
+    print("\Trigrams Spacy:")
+    processor = CorpusProcessor(corpus=Corpus("../datasets/ustawy"))
     tokens = processor.get_tokens()
     print(len(tokens))
-    # print(processor.get_bigram())
-    print("Top 10 PMI: \n", processor.get_pmi_top10())
+    print("Top 10 PMI: \n", processor.get_pmi_top10(trigrams=True))
     print(
-        "Top 10 PMI, occurrences >= 5: \n", processor.get_pmi_top10(min_occurrences=5)
+        "Top 10 PMI, occurrences >= 5: \n", processor.get_pmi_top10(trigrams=True,min_occurrences=5)
     )
+
+    # print("\Trigrams Clarin:")
+    # processor = CorpusProcessor(
+    #     text_processor=ClarinTextProcessor(),
+    #     corpus=Corpus("../datasets/ustawy_tagged_clarin"),
+    # )
+    # tokens = processor.get_tokens()
+    # print(len(tokens))
+    # print("Top 10 PMI: \n", processor.get_pmi_top10(trigrams=True))
+    # print(
+    #     "Top 10 PMI, occurrences >= 5: \n", processor.get_pmi_top10(trigrams=True,min_occurrences=5)
+    # )
