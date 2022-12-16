@@ -220,14 +220,48 @@ class NerClient:
             text = f.read()
             root = ET.fromstring(text)
             classes = []
-            for s in root.findall(".//*/ann"):
-                # sentence = []
-                # for r in s.findall("tok"):
-                #     orth = str(r.find("orth").text)
-                #     lex = r.find("lex")
-                #     base = str(lex.find("base").text).lower()
+
+            # for s in root.findall(".//*/ann"):
+            #     classes.append(s.attrib["chan"])
+
+            for token in root.findall(".//*/tok"):
+                entity = defaultdict(lambda: [])
+                #    <tok>
+                #     <orth>Minister</orth>
+                #     <lex disamb="1"><base>minister</base><ctag>subst:sg:nom:m1</ctag></lex>
+                #     <ann chan="nam_org_institution" head="1">1</ann>
+                #    </tok>
+                #    <tok>
+                #     <orth>Finansów</orth>
+                #     <lex disamb="1"><base>finanse</base><ctag>subst:pl:gen:n</ctag></lex>
+                #     <ann chan="nam_org_institution">1</ann>
+                #    </tok>
+                #    <ns/>
+                #    <tok>
+                #     <orth>,</orth>
+                #     <lex disamb="1"><base>,</base><ctag>interp</ctag></lex>
+                #     <ann chan="nam_org_institution">0</ann>
+                #    </tok>
+                orth = str(token.find("orth").text)
+                lex = token.find("lex")
+                base = str(lex.find("base").text).lower()
+
+                for ann in token.findall("ann"):
+                    chan = ann.attrib["chan"]
+                    value = int(ann.text)
+
+                    if value == 0:
+                        if len(entity[chan]) > 0:
+                            classes.append((chan, entity[chan]))
+                            entity[chan] = []
+                        continue
+
+                    entity[chan].append(orth)
+
+                for chan, values in entity.items():
+                    if len(values) > 0:
+                        classes.append((chan, " ".join(entity[chan])))
                 # tokens.append(sentence)
-                classes.append(s.attrib["chan"])
             return classes
 
     def get_token_classes(self):
@@ -255,20 +289,67 @@ class NerClient:
             return self.token_classes
 
 
-def plot_histogram(values, bins=50):
-    def do_plot(values, suffix=''):
-        plt.figure(figsize=(20, 15), dpi=200)
-        plt.hist(values, bins=bins)
-        plt.ylabel("Count")
-        plt.xlabel("Value")
-        plt.title("Token classes histogram")
-        plt.xticks(rotation="vertical")
-        plt.tight_layout()
-        plt.savefig(f"hist{suffix}.png")
-        # plt.show()
-    do_plot(values, '1')
-    values = ['_'.join(v.split('_')[:2]) for v in values]
-    do_plot(values, '2')
+class ClassesProcessor:
+    def __init__(self, values: List):
+        self.values = values
+
+    @staticmethod
+    def coarse_grained(classname):
+        return "_".join(classname.split("_")[:2])
+
+    def plot_histogram(self, bins=50):
+        def do_plot(values, suffix=""):
+            plt.figure(figsize=(20, 15), dpi=200)
+            plt.hist(values, bins=bins)
+            plt.ylabel("Count")
+            plt.xlabel("Value")
+            plt.title("Token classes histogram")
+            plt.xticks(rotation="vertical")
+            plt.tight_layout()
+            output = f"hist{suffix}.png"
+            if not os.path.isfile(output):
+                plt.savefig(output)
+            # plt.show()
+
+        values = self.get_classnames()
+        do_plot(values, "1")
+        values = [self.__class__.coarse_grained(v) for v in values]
+        do_plot(values, "2")
+
+    @staticmethod
+    def group(values):
+        res = defaultdict(lambda: [])
+        for classname, entity in values:
+            res[classname].append(entity)
+        return res
+
+    def get_classnames(self):
+        return [v for v, _e in self.values]
+
+    def get_coarse_grained(self):
+        return [(self.__class__.coarse_grained(v), e) for v, e in self.values]
+
+    def group_coarse_grained(self):
+        return self.__class__.group(self.get_coarse_grained())
+
+    def count_coarse_grained(self):
+        grouped = self.group_coarse_grained()
+        return {classname: Counter(entities) for classname, entities in grouped.items()}
+
+    def print_top_k_coarse_grained(self, k=10):
+        count_coarse_grained = self.count_coarse_grained()
+        print(f"Top {k} classes:")
+        for classname, counter in count_coarse_grained.items():
+            print(classname)
+            pprint(counter.most_common(k))
+
+    def count_entities(self):
+        return Counter(self.get_coarse_grained())
+
+    def print_top_k_entities(self, k=50):
+        count_entities = self.count_entities()
+        print(f"Top {k} entities:")
+        pprint(count_entities.most_common(k))
 
 
 if __name__ == "__main__":
@@ -293,4 +374,9 @@ if __name__ == "__main__":
     classes = ner_client.get_token_classes()
     print(classes[:50])
 
-    plot_histogram(classes)
+    # plot_histogram([chan for chan, _entity in classes])
+
+    classes_processor = ClassesProcessor(classes)
+    classes_processor.plot_histogram()
+    classes_processor.print_top_k_coarse_grained(10)
+    classes_processor.print_top_k_entities()
