@@ -10,22 +10,22 @@ from dataclasses import dataclass
 from multiprocessing import Pool
 from pprint import pprint
 from typing import Dict, List, Optional, Set
+
 import nltk
-from nltk.collocations import *
 import pandas as pd
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 from elasticsearch_dsl import Document, Search, Text, analyzer, connections
 from Levenshtein import distance
+from lpmn_client import Task, download_file, upload_file
 from matplotlib import pyplot as plt
+from nltk.collocations import *
 from spacy.lang.pl import Polish
 from spacy.tokenizer import Tokenizer
-from lpmn_client import download_file, upload_file
-from lpmn_client import Task
-from pprint import pprint
-from matplotlib import pyplot as plt
 
-N_PROCESSES = 32
+# pip install -i https://pypi.clarin-pl.eu lpmn_client
+
+N_PROCESSES = 16
 
 
 def is_top_50(filename: str) -> bool:
@@ -123,10 +123,6 @@ class ClarinTextProcessor:
                     orth = str(r.find("orth").text)
                     lex = r.find("lex")
                     base = str(lex.find("base").text).lower()
-                    # ctag = str(r.find("ctag").text).lower()
-                    # if ctag:
-                    #     ctag = ctag.split(":")[0]
-                    # sentence.append(f"{orth}:{base}")
                     if self.__class__.filter_word(base):
                         sentence.append((orth, base))
                 tokens.append(sentence)
@@ -224,8 +220,8 @@ class NerClient:
             # for s in root.findall(".//*/ann"):
             #     classes.append(s.attrib["chan"])
 
+            entity = defaultdict(lambda: [])
             for token in root.findall(".//*/tok"):
-                entity = defaultdict(lambda: [])
                 #    <tok>
                 #     <orth>Minister</orth>
                 #     <lex disamb="1"><base>minister</base><ctag>subst:sg:nom:m1</ctag></lex>
@@ -252,16 +248,16 @@ class NerClient:
 
                     if value == 0:
                         if len(entity[chan]) > 0:
-                            classes.append((chan, entity[chan]))
+                            classes.append((chan, " ".join(entity[chan])))
                             entity[chan] = []
                         continue
 
                     entity[chan].append(orth)
 
-                for chan, values in entity.items():
-                    if len(values) > 0:
-                        classes.append((chan, " ".join(entity[chan])))
-                # tokens.append(sentence)
+            for chan, values in entity.items():
+                if len(values) > 0:
+                    classes.append((chan, " ".join(entity[chan])))
+
             return classes
 
     def get_token_classes(self):
