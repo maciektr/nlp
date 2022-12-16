@@ -187,7 +187,7 @@ class NerClient:
     def __init__(self) -> None:
         self.task = Task(lpmn='any2txt|wcrft2|liner2({"model":"n82"})')
         self.task.email = "mtratnow@student.agh.edu.pl"
-        self.token_classes = None
+        self.token_classes = defaultdict(lambda: None)
 
         os.makedirs(self.__class__.output_dir, exist_ok=True)
 
@@ -260,29 +260,84 @@ class NerClient:
 
             return classes
 
-    def get_token_classes(self):
-        if self.token_classes is not None:
-            return self.token_classes
+    @staticmethod
+    def get_sentences(filename: str):
+        with open(filename, "r", encoding="utf-8") as f:
+            text = f.read()
+            root = ET.fromstring(text)
+            sentences = []
 
-        cache_file_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, "liner_token_classes")
+            for sentence in root.findall(".//*/sentence"):
+                classes = []
+                #    <tok>
+                #     <orth>Minister</orth>
+                #     <lex disamb="1"><base>minister</base><ctag>subst:sg:nom:m1</ctag></lex>
+                #     <ann chan="nam_org_institution" head="1">1</ann>
+                #    </tok>
+                #    <tok>
+                #     <orth>Finansów</orth>
+                #     <lex disamb="1"><base>finanse</base><ctag>subst:pl:gen:n</ctag></lex>
+                #     <ann chan="nam_org_institution">1</ann>
+                #    </tok>
+                #    <ns/>
+                #    <tok>
+                #     <orth>,</orth>
+                #     <lex disamb="1"><base>,</base><ctag>interp</ctag></lex>
+                #     <ann chan="nam_org_institution">0</ann>
+                #    </tok>
+                words = []
+                entity = defaultdict(lambda: [])
+                for token in sentence.findall("tok"):
+                    orth = str(token.find("orth").text)
+                    lex = token.find("lex")
+                    base = str(lex.find("base").text).lower()
+                    words.append(orth)
+
+                    for ann in token.findall("ann"):
+                        chan = ann.attrib["chan"]
+                        value = int(ann.text)
+
+                        if value == 0:
+                            if len(entity[chan]) > 0:
+                                classes.append((chan, " ".join(entity[chan])))
+                                entity[chan] = []
+                            continue
+
+                        entity[chan].append(orth)
+
+                for chan, values in entity.items():
+                    if len(values) > 0:
+                        classes.append((chan, " ".join(entity[chan])))
+
+                sentences.append((words, classes))
+            return sentences
+
+    def get_token_classes(self, fun=None, hash_name="liner_token_classes"):
+        if self.token_classes[hash_name] is not None:
+            return self.token_classes[hash_name]
+
+        if fun is None:
+            fun = self.__class__.process_token_classes_file
+        hash_name = fun.__name__ or "liner_token_classes"
+        # print(hash_name)
+
+        cache_file_uuid = uuid.uuid5(uuid.NAMESPACE_DNS, hash_name)
         tokens_pickle_filename = f".{cache_file_uuid}.cache.pkl"
 
         if os.path.isfile(tokens_pickle_filename):
             print("Loading token classes from cache")
             with open(tokens_pickle_filename, "rb") as f:
-                self.token_classes = pickle.load(f)
-            return self.token_classes
+                self.token_classes[hash_name] = pickle.load(f)
+            return self.token_classes[hash_name]
 
         with Pool(N_PROCESSES) as pool:
-            docs_tokens = pool.map(
-                self.__class__.process_token_classes_file, self.list_output_files()
-            )
+            docs_tokens = pool.map(fun, self.list_output_files())
 
-            self.token_classes = sum(docs_tokens, start=[])
+            self.token_classes[hash_name] = sum(docs_tokens, start=[])
             with open(tokens_pickle_filename, "wb") as f:
-                pickle.dump(self.token_classes, f)
+                pickle.dump(self.token_classes[hash_name], f)
 
-            return self.token_classes
+            return self.token_classes[hash_name]
 
 
 class ClassesProcessor:
@@ -370,9 +425,24 @@ if __name__ == "__main__":
     classes = ner_client.get_token_classes()
     print(classes[:50])
 
-    # plot_histogram([chan for chan, _entity in classes])
-
     classes_processor = ClassesProcessor(classes)
     classes_processor.plot_histogram()
     classes_processor.print_top_k_coarse_grained(10)
     classes_processor.print_top_k_entities()
+
+    sentences = ner_client.get_token_classes(
+        fun=NerClient.get_sentences, hash_name="aaa"
+    )
+    i = 5
+    for sentence, chans in sentences:
+        if i == 0:
+            break
+
+        parsed_chans = set(
+            [ClassesProcessor.coarse_grained(chan) for chan, _e in chans]
+        )
+        if len(parsed_chans) > 1:
+            print()
+            print(" ".join(sentence))
+            pprint(list(set(chans)))
+            i -= 1
