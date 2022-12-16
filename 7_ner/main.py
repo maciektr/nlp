@@ -256,15 +256,19 @@ class NerClient:
 
 
 def plot_histogram(values, bins=50):
-    plt.figure(figsize=(20, 15), dpi=200)
-    plt.hist(values, bins=bins)
-    plt.ylabel("Count")
-    plt.xlabel("Value")
-    plt.title("Token classes histogram")
-    plt.xticks(rotation="vertical")
-    plt.tight_layout()
-    plt.savefig("hist.png")
-    # plt.show()
+    def do_plot(values, suffix=''):
+        plt.figure(figsize=(20, 15), dpi=200)
+        plt.hist(values, bins=bins)
+        plt.ylabel("Count")
+        plt.xlabel("Value")
+        plt.title("Token classes histogram")
+        plt.xticks(rotation="vertical")
+        plt.tight_layout()
+        plt.savefig(f"hist{suffix}.png")
+        # plt.show()
+    do_plot(values, '1')
+    values = ['_'.join(v.split('_')[:2]) for v in values]
+    do_plot(values, '2')
 
 
 if __name__ == "__main__":
